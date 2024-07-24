@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -23,6 +24,11 @@ type model struct {
 	quitting bool
 	err      error
 	pokemon  structs.Pokemon
+	bag      []structs.Pokemon
+}
+
+func (m model) getDefaultSprite() string {
+	return m.pokemon.Sprites.FrontDefault
 }
 
 var quitKeys = key.NewBinding(
@@ -53,7 +59,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if key.Matches(msg, quitKeys) {
 			m.quitting = true
 			return m, tea.Quit
-
 		}
 		if key.Matches(msg, fetchKeys) {
 			i := rand.Intn(151)
@@ -61,6 +66,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				i = rand.Intn(600)
 			}
 			p, err := pokeapi.Pokemon(strconv.Itoa(i))
+			m.bag = append(m.bag, p)
 			if err != nil {
 				log.Fatal("there was an error retrieving a pokemon", err)
 			}
@@ -91,28 +97,29 @@ func (m model) View() string {
 		Width(40)
 
 	pokelabel := "Fetch a pokemon!"
+	var sb strings.Builder
+
+	fmt.Fprint(&sb, pokeStyle.Render(pokelabel, m.pokemon.Name))
 	if m.pokemon.Name != "" {
-		pokelabel = "Got a pokemon: "
+		fmt.Fprintf(&sb, "\n\nNumber: %d\n", m.pokemon.Order)
+	} else {
+		fmt.Fprintf(&sb, "\n\n%s\tWaiting for a command...", m.spinner.View())
 	}
+	fmt.Fprintf(&sb, "\n%s", fetchKeys.Help().Desc)
+	fmt.Fprintf(&sb, "\n%s", quitKeys.Help().Desc)
 
-	str := fmt.Sprintf(
-		"%s\n\n   %s Waiting command...\n%s \n %s\n\n",
-		pokeStyle.Render(pokelabel, m.pokemon.Name),
-		m.spinner.View(),
-		fetchKeys.Help().Desc,
-		quitKeys.Help().Desc,
-	)
-
+	// TODO: render sprite as an image
 	if m.quitting {
-		return str + "\n"
+		fmt.Fprint(&sb, "\nGood Bye")
 	}
-	return str
+	return sb.String()
 }
 
 func main() {
 	p := tea.NewProgram(initialModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Println(err)
+		log.Fatal(err)
 		os.Exit(1)
 	}
 }
