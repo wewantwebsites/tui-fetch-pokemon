@@ -18,13 +18,17 @@ import (
 )
 
 type errMsg error
+type listItem struct {
+	name   string
+	number int
+}
 
 type model struct {
 	spinner  spinner.Model
 	quitting bool
 	err      error
 	pokemon  structs.Pokemon
-	bag      []structs.Pokemon
+	bag      map[int]string
 }
 
 func (m model) getDefaultSprite() string {
@@ -41,11 +45,16 @@ var fetchKeys = key.NewBinding(
 	key.WithHelp("", "press 'f' or 'p' to fetch a pokemon"),
 )
 
+var listKeys = key.NewBinding(
+	key.WithKeys("l"),
+)
+
 func initialModel() model {
+	m := map[int]string{}
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	return model{spinner: s}
+	return model{spinner: s, bag: m}
 }
 
 func (m model) Init() tea.Cmd {
@@ -61,16 +70,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 		if key.Matches(msg, fetchKeys) {
-			i := rand.Intn(151)
-			if i <= 0 {
-				i = rand.Intn(600)
+			i := rand.Intn(151) + 1
+			for m.bag[i] != "" {
+				i = rand.Intn(151) + 1
 			}
 			p, err := pokeapi.Pokemon(strconv.Itoa(i))
-			m.bag = append(m.bag, p)
 			if err != nil {
 				log.Fatal("there was an error retrieving a pokemon", err)
 			}
 
+			m.bag[p.Order] = p.Name
 			m.pokemon = p
 		}
 		return m, nil
@@ -91,8 +100,7 @@ func (m model) View() string {
 		return m.err.Error()
 	}
 	pokeStyle := lipgloss.DefaultRenderer().NewStyle().
-		Background(lipgloss.Color("69")).
-		Foreground(lipgloss.Color("#000")).
+		Border(lipgloss.NormalBorder()).
 		Padding(2, 4).
 		Width(40)
 
@@ -100,10 +108,11 @@ func (m model) View() string {
 	var sb strings.Builder
 
 	fmt.Fprint(&sb, pokeStyle.Render(pokelabel, m.pokemon.Name))
-	if m.pokemon.Name != "" {
-		fmt.Fprintf(&sb, "\n\nNumber: %d\n", m.pokemon.Order)
-	} else {
+	if m.pokemon.Name == "" {
 		fmt.Fprintf(&sb, "\n\n%s\tWaiting for a command...", m.spinner.View())
+	}
+	if len(m.bag) > 0 {
+		fmt.Fprintf(&sb, "\n%v", m.bag)
 	}
 	fmt.Fprintf(&sb, "\n%s", fetchKeys.Help().Desc)
 	fmt.Fprintf(&sb, "\n%s", quitKeys.Help().Desc)
