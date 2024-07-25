@@ -31,10 +31,6 @@ type model struct {
 	bag      map[int]string
 }
 
-func (m model) getDefaultSprite() string {
-	return m.pokemon.Sprites.FrontDefault
-}
-
 var quitKeys = key.NewBinding(
 	key.WithKeys("q", "esc", "ctrl+c"),
 	key.WithHelp("", "press q to quit"),
@@ -47,6 +43,13 @@ var fetchKeys = key.NewBinding(
 
 var listKeys = key.NewBinding(
 	key.WithKeys("l"),
+)
+
+var (
+	pokeCard = lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		Padding(2, 4).
+		Width(40)
 )
 
 func initialModel() model {
@@ -99,15 +102,11 @@ func (m model) View() string {
 	if m.err != nil {
 		return m.err.Error()
 	}
-	pokeStyle := lipgloss.DefaultRenderer().NewStyle().
-		Border(lipgloss.NormalBorder()).
-		Padding(2, 4).
-		Width(40)
 
 	pokelabel := "Fetch a pokemon!"
 	var sb strings.Builder
 
-	fmt.Fprint(&sb, pokeStyle.Render(pokelabel, m.pokemon.Name))
+	fmt.Fprint(&sb, pokeCard.Render(pokelabel, m.pokemon.Name))
 	if m.pokemon.Name == "" {
 		fmt.Fprintf(&sb, "\n\n%s\tWaiting for a command...", m.spinner.View())
 	}
