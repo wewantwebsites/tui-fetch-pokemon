@@ -98,6 +98,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
+func (m *model) printBag() string {
+	var sb strings.Builder
+
+	for k, v := range m.bag {
+		fmt.Fprintf(&sb, "poke: %s\t#%d\n", v, k)
+	}
+	return sb.String()
+}
+
 func (m model) View() string {
 	if m.err != nil {
 		return m.err.Error()
@@ -106,12 +115,9 @@ func (m model) View() string {
 	pokelabel := "Fetch a pokemon!"
 	var sb strings.Builder
 
-	fmt.Fprint(&sb, pokeCard.Render(pokelabel, m.pokemon.Name))
+	fmt.Fprint(&sb, pokeCard.Render(pokelabel, m.pokemon.Name, m.printBag()))
 	if m.pokemon.Name == "" {
 		fmt.Fprintf(&sb, "\n\n%s\tWaiting for a command...", m.spinner.View())
-	}
-	if len(m.bag) > 0 {
-		fmt.Fprintf(&sb, "\n%v", m.bag)
 	}
 	fmt.Fprintf(&sb, "\n%s", fetchKeys.Help().Desc)
 	fmt.Fprintf(&sb, "\n%s", quitKeys.Help().Desc)
