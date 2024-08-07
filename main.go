@@ -27,9 +27,11 @@ type Item struct {
 func (i Item) Title() string {
 	return i.title
 }
+
 func (i Item) Description() string {
 	return i.desc
 }
+
 func (i Item) FilterValue() string {
 	return i.title
 }
@@ -60,7 +62,7 @@ var (
 
 func initialModel() model {
 	i := []list.Item{}
-	var delegateKeys = newDelegateKeyMap()
+	delegateKeys := newDelegateKeyMap()
 	delegate := newItemDelegate(delegateKeys)
 	l := list.New(i, delegate, 0, 0)
 	l.Title = "PokeDex"
