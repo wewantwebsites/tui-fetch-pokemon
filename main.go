@@ -44,26 +44,17 @@ var fetchKeys = key.NewBinding(
 	key.WithHelp("", "press 'f' or 'p' to fetch a pokemon"),
 )
 
-var listKeys = key.NewBinding(
-	key.WithKeys("l"),
-)
-
 var (
 	pokeCard = lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder()).
 			Padding(2, 4).
 			Width(40)
 
-	appStyle   = lipgloss.NewStyle().Padding(1, 2)
-	titleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFFDF5")).
-			Background(lipgloss.Color("#25A065")).
-			Padding(0, 1)
-
+	appStyle           = lipgloss.NewStyle().Padding(1, 2)
 	statusMessageStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#044f9f"}).
+				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#ff66ff"}).
 				Render
-	// make styles:
+	// TODOs:
 	// [ ] pokemon with name, summary, stats, 4 random moves, number, typing
 )
 
@@ -129,7 +120,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, insertCmd, statusCmd)
 		}
 		// case key.Matches(msg, listKeys):
-
+		var listCmd tea.Cmd
+		m.list, listCmd = m.list.Update(msg)
+		cmds = append(cmds, listCmd)
 		return m, tea.Batch(cmds...)
 
 	case errMsg:
@@ -168,7 +161,8 @@ func (m model) View() string {
 	fmt.Fprintf(&sb, "\n%s", quitKeys.Help().Desc)
 
 	if m.quitting {
-		fmt.Fprint(&sb, "\nGood Bye")
+		fmt.Fprintf(&sb, "\n\n")
+		fmt.Fprint(&sb, statusMessageStyle("Good Bye!"))
 	}
 
 	return appStyle.Render(sb.String())
