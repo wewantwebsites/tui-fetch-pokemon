@@ -6,3 +6,9 @@ linters:
     - unconvert
     - unparam
     - wastedassign
+    - errcheck
+    - gosimple
+    - govet
+    - staticcheck
+run:
+  tests: true
