@@ -94,8 +94,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		h, v := appStyle.GetFrameSize()
 		m.list.SetSize(msg.Width-h, msg.Height-v-15)
+
 	case tea.KeyMsg:
-		if m.list.FilterState() == list.Filtering {
+		isFiltering := m.list.FilterState() == list.Filtering
+
+		if isFiltering {
 			break
 		}
 
@@ -103,6 +106,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, quitKeys):
 			m.quitting = true
 			return m, tea.Quit
+
 		case key.Matches(msg, fetchKeys):
 			i := rand.Intn(151) + 1
 			for _, ok := m.bag[i]; ok; _, ok = m.bag[i] {
@@ -150,15 +154,16 @@ func (m model) View() string {
 		return appStyle.Render(m.err.Error())
 	}
 
-	pokelabel := "Fetch a pokemon!"
 	var sb strings.Builder
 
-	fmt.Fprint(&sb, pokeCard.Render(pokelabel, m.pokemon.Name))
 	if m.pokemon.Name == "" {
+		pokelabel := "Fetch a pokemon!"
+		fmt.Fprint(&sb, pokeCard.Render(pokelabel, m.pokemon.Name))
 		fmt.Fprintf(&sb, "\n\n%s\tWaiting for a command...", m.spinner.View())
 	} else {
 		fmt.Fprintf(&sb, "\n%s", m.list.View())
 	}
+
 	fmt.Fprintf(&sb, "\n%s", fetchKeys.Help().Desc)
 	fmt.Fprintf(&sb, "\n%s", quitKeys.Help().Desc)
 
